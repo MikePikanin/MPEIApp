@@ -5,7 +5,6 @@
     "project_id": "mpei-notification",
     "storage_bucket": "mpei-notification.appspot.com"
   },
-  
   "client": [
     {
       "client_info": {
