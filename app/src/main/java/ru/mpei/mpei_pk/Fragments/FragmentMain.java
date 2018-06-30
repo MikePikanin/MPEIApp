@@ -54,7 +54,6 @@ public class FragmentMain extends Fragment{
     private MyTimerTask timerTask;
     private Context context;
     private static boolean runTimer = true;
-    private static boolean firstTimer = true;
 
     private ExpandableLayout expQueue;
     private ExpandableLayout expRooms;
@@ -86,6 +85,9 @@ public class FragmentMain extends Fragment{
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         try {
+            NavigationView navigation =  ((Activity)context).findViewById(R.id.nav_view);
+            navigation.getMenu().getItem(0).setChecked(true);
+
             expQueue = ((Activity)context).findViewById(R.id.expandableQueue);
             expRooms = ((Activity)context).findViewById(R.id.expandableRooms);
             expNews = ((Activity)context).findViewById(R.id.expandableNews);
@@ -160,7 +162,7 @@ public class FragmentMain extends Fragment{
                                 progressBar.setVisibility(ProgressBar.VISIBLE);
                             }
                         });
-                        final String queue_numbers, queue_load;
+                        String queue_numbers, queue_load;
                         if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {// || flzero)) {
                             queue_numbers = protocolMPEI.get_queue_numbers();
                             queue_load = protocolMPEI.get_queue_load();
@@ -207,17 +209,19 @@ public class FragmentMain extends Fragment{
                         } catch (Exception e) {
                             Log.e("FragmentMain", e.getMessage());
                         }
+                        displayRooms(queue_numbers);
+                        displayQueue(queue_load);
+
                         ((MainActivity) context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
 
                                 drawNews();
-                                displayRooms(queue_numbers);
-                                expQueue.show();
-                                displayQueue(queue_load);
 
                                 ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                 progressBar.setVisibility(ProgressBar.INVISIBLE);
+
+                                expQueue.show();
                             }
                         });
                         timerTask = new MyTimerTask();
@@ -236,34 +240,12 @@ public class FragmentMain extends Fragment{
     @Override
     public void onPause() {
         runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
-        }
         super.onPause();
     }
 
     @Override
     public void onResume() {
         runTimer = true;
-        NavigationView navigation =  ((Activity)context).findViewById(R.id.nav_view);
-        navigation.getMenu().getItem(0).setChecked(true);
-        if (!firstTimer) {
-            try {
-                if (timer != null) {
-                    if (timerTask == null) {
-                        timerTask = new MyTimerTask();
-                    }
-                    timer.schedule(timerTask, 30000, 30000);
-                }
-            } catch (Exception e) {
-                Log.e("FragmentMain", e.getMessage());
-            }
-        }
         super.onResume();
     }
 
@@ -279,20 +261,6 @@ public class FragmentMain extends Fragment{
             Log.e("FragmentMain", e.getMessage());
         }
         super.onDestroy();
-    }
-
-    @Override
-    public void onStop() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
-        }
-        super.onStop();
     }
 
     @Override
@@ -318,16 +286,11 @@ public class FragmentMain extends Fragment{
                     int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
                     if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {// || flzero)) {
-                        final String queue_load = protocolMPEI.get_queue_load();
-                        final String queue_numbers = protocolMPEI.get_queue_numbers();
+                        String queue_load = protocolMPEI.get_queue_load();
+                        String queue_numbers = protocolMPEI.get_queue_numbers();
 
-                        ((MainActivity) context).runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                displayQueue(queue_load);
-                                displayRooms(queue_numbers);
-                            }
-                        });
+                        displayQueue(queue_load);
+                        displayRooms(queue_numbers);
                     }
                 } else {
                     this.cancel();
@@ -337,56 +300,61 @@ public class FragmentMain extends Fragment{
             }
         }
     }
-    private void displayQueue(String queue)
+    private void displayQueue(final String queue)
     {
         try {
-            if (queue != null) {
-                expQueue.setVisibility(View.VISIBLE);
+            ((Activity) context).runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (queue != null) {
+                        expQueue.setVisibility(View.VISIBLE);
 
-                int size = ((Activity)context).findViewById(R.id.mainWrapper).getWidth() / 10;
-                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(size, size * 2);
+                        int size = ((Activity)context).findViewById(R.id.mainWrapper).getWidth() / 10;
+                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(size, size * 2);
 
-                LinearLayout linearLayout = expQueue.getContentLayout().findViewById(R.id.photosItemQueue);
-                linearLayout.removeAllViews();
+                        LinearLayout linearLayout = expQueue.getContentLayout().findViewById(R.id.photosItemQueue);
+                        linearLayout.removeAllViews();
 
-                int len;
-                String[] ar_info = queue.split("&");
-                try {
-                    len = Integer.parseInt(ar_info[0]);
-                } catch (Exception e) {
-                    len = 0;
-                }
-                if (len < 0) {
-                    len = 0;
-                } else if (len > 10) {
-                    len = 10;
-                }
-                for (int i = 1; i <= len; i++) {
-                    ImageView imageView = new ImageView(context);
-                    if (len <= 4) {
-                        imageView.setImageResource(R.drawable.ic_person_green);
-                    } else if (len <= 7) {
-                        imageView.setImageResource(R.drawable.ic_person_yellow);
+                        int len;
+                        String[] ar_info = queue.split("&");
+                        try {
+                            len = Integer.parseInt(ar_info[0]);
+                        } catch (Exception e) {
+                            len = 0;
+                        }
+                        if (len < 0) {
+                            len = 0;
+                        } else if (len > 10) {
+                            len = 10;
+                        }
+                        for (int i = 1; i <= len; i++) {
+                            ImageView imageView = new ImageView(context);
+                            if (len <= 4) {
+                                imageView.setImageResource(R.drawable.ic_person_green);
+                            } else if (len <= 7) {
+                                imageView.setImageResource(R.drawable.ic_person_yellow);
+                            } else {
+                                imageView.setImageResource(R.drawable.ic_person_red);
+                            }
+                            imageView.setLayoutParams(layoutParams);
+                            linearLayout.addView(imageView);
+                        }
+                        for (int i = len + 1; i <= 10; i++) {
+                            ImageView imageView = new ImageView(context);
+                            imageView.setImageResource(R.drawable.ic_person_gray);
+                            imageView.setLayoutParams(layoutParams);
+                            linearLayout.addView(imageView);
+                        }
+                        String caption = ar_info[2] + " на " + ar_info[1];
+
+                        TextView textChild = expQueue.getContentLayout().findViewById(R.id.textItemQueue);
+                        textChild.setText(caption);
+
                     } else {
-                        imageView.setImageResource(R.drawable.ic_person_red);
+                        expQueue.setVisibility(View.GONE);
                     }
-                    imageView.setLayoutParams(layoutParams);
-                    linearLayout.addView(imageView);
                 }
-                for (int i = len + 1; i <= 10; i++) {
-                    ImageView imageView = new ImageView(context);
-                    imageView.setImageResource(R.drawable.ic_person_gray);
-                    imageView.setLayoutParams(layoutParams);
-                    linearLayout.addView(imageView);
-                }
-                String caption = ar_info[2] + " на " + ar_info[1];
-
-                TextView textChild = expQueue.getContentLayout().findViewById(R.id.textItemQueue);
-                textChild.setText(caption);
-
-            } else {
-                expQueue.setVisibility(View.GONE);
-            }
+            });
         } catch (Exception e) {
             Log.e("FragmentMain", e.getMessage());
         }
@@ -395,10 +363,7 @@ public class FragmentMain extends Fragment{
     {
         try {
             if (rooms != null) {
-                expRooms.setVisibility(View.VISIBLE);
-
-                TableLayout table = expRooms.getContentLayout().findViewById(R.id.queue_rooms_table);
-                table.removeAllViews();
+                final ArrayList<View> tableRowList = new ArrayList<>();
 
                 TableRow.LayoutParams layoutParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
 
@@ -415,9 +380,9 @@ public class FragmentMain extends Fragment{
                 textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
                 textView.setGravity(Gravity.CENTER);
                 row.addView(textView);
-                table.addView(row);
+                tableRowList.add(row);
 
-                table.addView(getHorizontalBorder());
+                tableRowList.add(getHorizontalBorder());
 
                 String pattern = ".*\\[(.*?)]=(\\d{4})";
                 Pattern r = Pattern.compile(pattern);
@@ -466,8 +431,8 @@ public class FragmentMain extends Fragment{
 
                     }
 
-                    table.addView(row);
-                    table.addView(getHorizontalBorder());
+                    tableRowList.add(row);
+                    tableRowList.add(getHorizontalBorder());
                 }
                 row = new TableRow(context);
                 row.setGravity(Gravity.CENTER);
@@ -478,9 +443,28 @@ public class FragmentMain extends Fragment{
                 textView.setGravity(Gravity.CENTER);
                 textView.setLayoutParams(rowParams);
                 row.addView(textView);
-                table.addView(row);
+                tableRowList.add(row);
+
+                ((Activity) context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TableLayout table = ((Activity)context).findViewById(R.id.queue_reserve_table);
+                        table.removeAllViews();
+                        table.setStretchAllColumns(true);
+                        table.setShrinkAllColumns(true);
+                        for (View v : tableRowList) {
+                            table.addView(v);
+                        }
+                        expRooms.setVisibility(View.VISIBLE);
+                    }
+                });
             } else {
-                expRooms.setVisibility(View.GONE);
+                ((Activity) context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        expRooms.setVisibility(View.GONE);
+                    }
+                });
             }
         } catch (Exception e) {
             Log.e("FragmentMain", e.getMessage());

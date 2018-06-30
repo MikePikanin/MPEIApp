@@ -359,13 +359,20 @@ public class ProtocolMPEI {
             Request request = new Request.Builder()
                     .url("https://www.pkmpei.ru/mobile/get_queue_load.php")
                     .build();
-            Response response = client.newCall(request).execute();
-
-            if (response.isSuccessful()) {
-                return response.body().string();
-            }
-            else {
-                return null;
+            SharedPreferences sharedPref = context.getSharedPreferences("savedState", Context.MODE_PRIVATE);
+            try {
+                Response response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("queueLoad", response.body().string());
+                    editor.apply();
+                    return response.body().string();
+                }
+                else {
+                    return sharedPref.getString("queueLoad", null);
+                }
+            } catch (Exception e) {
+                return sharedPref.getString("queueLoad", null);
             }
         } catch (Exception e) {
             Log.e("ProtocolMPEI", e.getMessage());
@@ -409,14 +416,22 @@ public class ProtocolMPEI {
             Request request = new Request.Builder()
                     .url("https://www.pkmpei.ru/mobile/get_queue_numbers.php")
                     .build();
-            Response response = client.newCall(request).execute();
+            SharedPreferences sharedPref = context.getSharedPreferences("savedState", Context.MODE_PRIVATE);
+            try {
+                Response response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("queueNumbers", response.body().string());
+                    editor.apply();
+                    return response.body().string();
+                }
+                else {
+                    return sharedPref.getString("queueNumbers", null);
+                }
+            } catch (Exception e) {
+                return sharedPref.getString("queueNumbers", null);
+            }
 
-            if (response.isSuccessful()) {
-                return response.body().string();
-            }
-            else {
-                return null;
-            }
         } catch (Exception e) {
             Log.e("ProtocolMPEI", e.getMessage());
             return null;
@@ -551,6 +566,26 @@ public class ProtocolMPEI {
                                     map.put("EducationLevel", eduLevel);
                                     map.put("OnlyPayForm", onlyPayForm);
                                     map.put("IdReserve", idReserve);
+
+                                    int id_reserve;
+                                    try {
+                                        id_reserve = Integer.parseInt(idReserve);
+                                    } catch (Exception e) {
+                                        id_reserve = 0;
+                                    }
+                                    if (id_reserve > 0) {
+                                        String txtStatus = personInfo.getString("ReserveStatus");
+                                        map.put("ReserveStatus", txtStatus);
+                                        if (txtStatus.equals("OK")) {
+                                            String txtInterval = personInfo.getString("ReserveInterval");
+                                            String txtEduLevel = personInfo.getString("ReserveEducationLevel");
+                                            String txtVisitType = personInfo.getString("ReserveVisitType");
+                                            map.put("ReserveInterval", txtInterval);
+                                            map.put("ReserveEducationLevel", txtEduLevel);
+                                            map.put("ReserveVisitType", txtVisitType);
+                                        }
+                                    }
+
                                 } else {
                                     map.put("error", "Для иностранцев поставновка в очередь не производится");
                                 }
