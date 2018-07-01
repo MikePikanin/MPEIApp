@@ -81,7 +81,7 @@ public class FMService extends FirebaseMessagingService {
         NotificationCompat.Builder notificationBuilder =
                 //строим уведомление с требуемыми параметрами
                 new NotificationCompat.Builder(this, channelId)
-                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round))
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle(messageTitle)
                         .setContentText(messageBody)
