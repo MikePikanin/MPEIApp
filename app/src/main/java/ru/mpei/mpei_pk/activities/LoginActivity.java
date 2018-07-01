@@ -64,10 +64,10 @@ public class LoginActivity extends AppCompatActivity{
 
                                 ((Activity)context).finish();
                             } else {
-                                //Сокрытие полосы загрузки.
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        //Сокрытие полосы загрузки.
                                         ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBarLogin);
                                         progressBar.setVisibility(ProgressBar.INVISIBLE);
                                         Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();

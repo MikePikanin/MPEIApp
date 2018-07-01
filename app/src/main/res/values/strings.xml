@@ -40,10 +40,15 @@
     <string name="error_news">К сожалению новости не доступны в данный момент.</string>
     <string name="goto_room_text">В аудиторию Б-300 приглашаются</string>
     <string name="queue_reserved_info">Абитуриенты, зарезервировавшие место в очереди, обслуживаются в приоритетном порядке в зарезервированном интервале времени. Гарантируется начало работы с абитуриентом в пределах выбранного интервала времени. Абитуриент должен прибыть в НИУ «МЭИ» и зарегистрироваться не позднее, чем за 15 минут до начала выбранного интервала времени. В случае опоздания (не более чем на 30 минут от начала периода резервирования), время гарантированного начала работы с абитуриентом сдвигается на 30 минут вперед. При опоздании более чем на 30 минут зарезервированное место в очереди аннулируется.</string>
+    <string name="user_info">Вы успешно зарегистрированы!\nПожалуйста, запомните Ваши данные для входа в свой аккаунт:\nЛогин - <b>%s</b>\nПароль - <b>%s</b>;</string>
+    <string name="docsEditMsg">Подача документов в мобильном приложении временно недоступна. Чтобы заполнить документы на сайте нажмите конпку \"Перейти на сайт\".</string>
+    <string name="openWebBtn">Перейти на сайт</string>
     <string-array name="passRestoreQuestions">
-        <item>Девичья фамилия вашей матери</item>
-        <item>Имя первого питомца</item>
-        <item>Любимый цвет</item>
+        <item>Девичья фамилия Вашей матери?</item>
+        <item>Кличка Вашего первого питомца?</item>
+        <item>Номер школы, которую Вы закончили?</item>
+        <item>Имя лучшего друга детства?</item>
+        <item>Куда Вы впервые полетели на самолете?</item>
     </string-array>
     <string name="siteCommonPubKey">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz6xirYMIGw9obXGuN5TomjPwiCfQKUsdOgktygiiwwCGx5FqMxPf32VFWMEAiTWTKCnSxlS45+3mugXnkcyz6ltKslf16ON1LEERV0HQWq+WzFm1KN/QabG1Slj0JqTYVptnuwsMSl0cYrXQY/OuwbmE+5cR3p7LjwelKyzLnl9u7O/DjE1R3RsCqbZtmYlSWDBBYFUm1B+aBWwUnBid4poyQo3kqMV7TWzgpi+8vZPvVK8OAPHqdg2Ub/XDxi434Mmr+AmEbsy1GvQONg/iW1sq0Q4s++sLv4qThaS5zqk0mU3KDWyVvgvqWhguvjNM2g+kIwQ8f1IHSL03X3HUtQIDAQAB</string>
 </resources>

@@ -45,7 +45,7 @@ public class FragmentNews extends Fragment {
 
     @Override
     public void onResume() {
-        NavigationView navigation = (NavigationView) ((Activity)context).findViewById(R.id.nav_view);
+        NavigationView navigation = ((Activity)context).findViewById(R.id.nav_view);
         navigation.getMenu().getItem(3).setChecked(true);
         super.onResume();
     }
@@ -125,6 +125,5 @@ public class FragmentNews extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        //mListener = null;
     }
 }

@@ -27,6 +27,8 @@ public class ProtocolMPEI {
     private static final int QUICK_AUTH = 1;
     private static final int USUAL_AUTH = 2;
     private static final int TICKET_AUTH = 3;
+    private static final int EXIT_AUTH = 5;
+    private static final int USUAL_REG = 1;
     private final static String authURL = "https://www.pkmpei.ru/mobile/auth.php";
     private final static String regURL = "https://www.pkmpei.ru/mobile/reg.php";
 
@@ -48,10 +50,12 @@ public class ProtocolMPEI {
             String sign_data = Integer.toString(QUICK_AUTH) + nickname + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
 
             jsonObj.put("method", QUICK_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
 
             String data = jsonObj.toString();
 
@@ -100,10 +104,12 @@ public class ProtocolMPEI {
             String sign_data = Integer.toString(TICKET_AUTH) + nickname + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
 
             jsonObj.put("method", TICKET_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
 
             String data = jsonObj.toString();
 
@@ -216,13 +222,16 @@ public class ProtocolMPEI {
         RsaEncryption rsaEnc = new RsaEncryption();
         JSONObject jsonObj = new JSONObject();
         try {
-            String sign_data = Integer.toString(5) + nickname + FirebaseInstanceId.getInstance().getToken();
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
+            String sign_data = Integer.toString(EXIT_AUTH) + nickname + padding + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
 
-            jsonObj.put("method", 5);
+            jsonObj.put("method", EXIT_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
+            jsonObj.put("token", FirebaseInstanceId.getInstance().getToken());
 
             String data = jsonObj.toString();
 
@@ -273,7 +282,7 @@ public class ProtocolMPEI {
             publicKey = RsaEncryption.makePemCertificate(publicKeyStr, RsaEncryption.PUBLIC_KEY);
             publicKey = Base64.encodeToString(publicKey.getBytes("ISO-8859-1"), Base64.DEFAULT);
 
-            jsonObj.put("method", 1);
+            jsonObj.put("method", USUAL_REG);
             jsonObj.put("mobilePubKey", publicKey);
             jsonObj.put("token", FirebaseInstanceId.getInstance().getToken());
             for (Map.Entry<String, String> entry : userInfo.entrySet()) {

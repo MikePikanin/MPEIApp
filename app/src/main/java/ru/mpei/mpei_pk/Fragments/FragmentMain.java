@@ -72,6 +72,7 @@ public class FragmentMain extends Fragment{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         protocolMPEI = new ProtocolMPEI(context);
+        timerTask = new MyTimerTask();
     }
 
     @Override
@@ -162,14 +163,6 @@ public class FragmentMain extends Fragment{
                                 progressBar.setVisibility(ProgressBar.VISIBLE);
                             }
                         });
-                        String queue_numbers, queue_load;
-                        if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {// || flzero)) {
-                            queue_numbers = protocolMPEI.get_queue_numbers();
-                            queue_load = protocolMPEI.get_queue_load();
-                        } else {
-                            queue_load = null;
-                            queue_numbers = null;
-                        }
                         try {
                             SharedPreferences sharedPref = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
                             int token = sharedPref.getInt("newsToken", 0);
@@ -209,13 +202,17 @@ public class FragmentMain extends Fragment{
                         } catch (Exception e) {
                             Log.e("FragmentMain", e.getMessage());
                         }
-                        displayRooms(queue_numbers);
-                        displayQueue(queue_load);
+                        if (day >= 1 && day <= 5 && hour >= 10 && (((hour <= 17 && day == 5) || hour <= 18))) {// || flzero)) {
+                            String queue_numbers = protocolMPEI.get_queue_numbers();
+                            String queue_load = protocolMPEI.get_queue_load();
+                            displayRooms(queue_numbers);
+                            displayQueue(queue_load);
+                            timer.schedule(timerTask, 30000, 30000);
+                        }
 
                         ((MainActivity) context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-
                                 drawNews();
 
                                 ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
@@ -224,8 +221,6 @@ public class FragmentMain extends Fragment{
                                 expQueue.show();
                             }
                         });
-                        timerTask = new MyTimerTask();
-                        timer.schedule(timerTask, 30000, 30000);
                     }catch (Exception e) {
                         Log.e("FragmentMain", e.getMessage());
                     }
@@ -285,7 +280,7 @@ public class FragmentMain extends Fragment{
                     int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
                     int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-                    if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {// || flzero)) {
+                    if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {
                         String queue_load = protocolMPEI.get_queue_load();
                         String queue_numbers = protocolMPEI.get_queue_numbers();
 

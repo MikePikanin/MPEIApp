@@ -31,8 +31,7 @@ public class ListNewsAdapter extends RecyclerView.Adapter<ListNewsAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_list_item_news, parent, false);
-        ViewHolder viewHolder = new ViewHolder(v);
-        return viewHolder;
+        return new ViewHolder(v);
     }
 
     @Override
@@ -42,39 +41,33 @@ public class ListNewsAdapter extends RecyclerView.Adapter<ListNewsAdapter.ViewHo
         ItemNews item = news.get(position);
 
         holder.title.setText(item.getTitle());
-        //holder.body.setText(item.getBody());
-
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{
 
         public TextView title;
-        //public TextView body;
 
         public ViewHolder(View itemView) {
             super(itemView);
             ItemNews item = (ItemNews) itemView.getTag();
 
             title = (TextView) itemView.findViewById(R.id.listNewsTitle);
-            //body = (TextView) itemView.findViewById(R.id.listNewsBody);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
                     ItemNews item = (ItemNews) view.getTag();
                     Bundle args = new Bundle();
                     args.putString("newsId",item.getId());
-                    Fragment fragment = (Fragment) FragmentNews.newInstance();
+                    Fragment fragment = FragmentNews.newInstance();
                     fragment.setArguments(args);
                     FragmentManager fragmentManager = context.getSupportFragmentManager();
                     fragmentManager.beginTransaction()
-                            .replace(R.id.flContent, fragment)
+                            .replace(R.id.flContent, fragment, fragment.getClass().getSimpleName())
                             .addToBackStack(null)
                             .commit();
                 }
             });
-
         }
     }
 

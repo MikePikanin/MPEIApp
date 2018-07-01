@@ -25,6 +25,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.security.acl.Group;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,9 +101,9 @@ public class FragmentQueue extends Fragment {
             ((MainActivity)context).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    NavigationView navigation = (NavigationView) ((Activity)context).findViewById(R.id.nav_view);
+                    NavigationView navigation = ((Activity)context).findViewById(R.id.nav_view);
                     navigation.getMenu().getItem(1).setChecked(true);
-                    ProgressBar progressBar = (ProgressBar) ((MainActivity) context).findViewById(R.id.progressBarMain);
+                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                     progressBar.setVisibility(ProgressBar.VISIBLE);
                 }
             });
@@ -144,7 +145,7 @@ public class FragmentQueue extends Fragment {
                             ((MainActivity) context).runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    ProgressBar progressBar = (ProgressBar) ((MainActivity) context).findViewById(R.id.progressBarMain);
+                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                     progressBar.setVisibility(ProgressBar.INVISIBLE);
                                 }
                             });
@@ -171,7 +172,7 @@ public class FragmentQueue extends Fragment {
                             ((MainActivity) context).runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    ProgressBar progressBar = (ProgressBar) ((MainActivity) context).findViewById(R.id.progressBarMain);
+                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                     progressBar.setVisibility(ProgressBar.INVISIBLE);
                                 }
                             });
@@ -184,6 +185,7 @@ public class FragmentQueue extends Fragment {
                             }
                             if (answer != null) {
                                 drawTable(answer);
+                                timer.schedule(timerTask, 30000, 30000);
                             } else {
                                 drawError(null);
                             }
@@ -191,11 +193,10 @@ public class FragmentQueue extends Fragment {
                             ((MainActivity) context).runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    ProgressBar progressBar = (ProgressBar) ((MainActivity) context).findViewById(R.id.progressBarMain);
+                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                     progressBar.setVisibility(ProgressBar.INVISIBLE);
                                 }
                             });
-                            timer.schedule(timerTask, 30000, 30000);
                         }
                     }
                 } else {
@@ -203,7 +204,7 @@ public class FragmentQueue extends Fragment {
                     ((MainActivity) context).runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            ProgressBar progressBar = (ProgressBar) ((MainActivity) context).findViewById(R.id.progressBarMain);
+                            ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                             progressBar.setVisibility(ProgressBar.INVISIBLE);
                         }
                     });
@@ -272,9 +273,16 @@ public class FragmentQueue extends Fragment {
 
     private void drawCancelReserve(final String id_reserve, String reservedInfo) {
         try {
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics());
 
             TableRow.LayoutParams rowParams = new TableRow.LayoutParams();
             rowParams.span = 2;
+            rowParams.leftMargin = margin;
+            rowParams.rightMargin = margin;
+
+            TableRow.LayoutParams itemParamsTxt = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2f);
+            itemParamsTxt.leftMargin = margin;
+            TableRow.LayoutParams itemParamsBtn = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
 
             final ArrayList<View> tableRowList = new ArrayList<>();
             TableRow tableRow;
@@ -284,20 +292,25 @@ public class FragmentQueue extends Fragment {
             tableRow = new TableRow(context);
             textView = new TextView(context);
             textView.setText(reservedInfo);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-            textView.setGravity(Gravity.CENTER);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+            textView.setGravity(Gravity.CENTER_VERTICAL);
+            textView.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
             textView.setLayoutParams(rowParams);
+            textView.setTextColor(getResources().getColor(R.color.colorBlack));
             tableRow.addView(textView);
             tableRowList.add(tableRow);
 
             tableRow = new TableRow(context);
+            tableRow.setGravity(Gravity.CENTER_VERTICAL);
             textView = new TextView(context);
-            textView.setText("Отменить резерв");
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-            textView.setGravity(Gravity.CENTER);
+            textView.setText("Вы можете отказаться от резерва и выбрать другой день или время");
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+            textView.setGravity(Gravity.CENTER_VERTICAL);
+            textView.setLayoutParams(itemParamsTxt);
+            textView.setTextColor(getResources().getColor(R.color.colorBlack));
             tableRow.addView(textView);
             button = new Button(context);
-            button.setText("Отменить");
+            button.setText("Отказаться");
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -350,7 +363,8 @@ public class FragmentQueue extends Fragment {
                     }).start();
                 }
             });
-            button.setGravity(Gravity.CENTER);
+            button.setGravity(Gravity.CENTER_VERTICAL);
+            button.setLayoutParams(itemParamsBtn);
             tableRow.addView(button);
             tableRowList.add(tableRow);
 
@@ -577,13 +591,11 @@ public class FragmentQueue extends Fragment {
                                 tableRow.addView(textView);
                                 tableRow.setBackgroundColor(getResources().getColor(R.color.colorFullQueue));
                             }
-                            //table.addView(tableRow);
                             tableRowList.add(tableRow);
                             //Граница
                             divider = new View(context);
                             divider.setLayoutParams(tableParams);
                             divider.setBackgroundColor(getResources().getColor(R.color.colorBlack));
-                            //table.addView(divider);
                             tableRowList.add(divider);
                         }
                     }
@@ -593,7 +605,6 @@ public class FragmentQueue extends Fragment {
                         textView = new TextView(context);
                         tableRow.addView(textView);
                         tableRow.setBackgroundColor(Color.WHITE);
-                        //table.addView(tableRow);
                         tableRowList.add(tableRow);
                     }
                 }
