@@ -4,13 +4,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 
 import android.os.Bundle;
 
 import android.support.annotation.NonNull;
 
-import android.support.constraint.Group;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
@@ -26,7 +24,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
@@ -166,7 +163,7 @@ public class MainActivity extends AppCompatActivity
             Fragment f = fragmentManager.findFragmentByTag(fragment.getClass().getSimpleName());
             FragmentTransaction transaction = fragmentManager.beginTransaction().replace(R.id.flContent, fragment, fragment.getClass().getSimpleName());
             //Проверяем, если такой фрагмент уже был открыт и не отображается в данный момент
-            if (f == null || !f.isVisible()) {
+            if (f == null) {
                 transaction.addToBackStack(null);
             }
             transaction.commit();
