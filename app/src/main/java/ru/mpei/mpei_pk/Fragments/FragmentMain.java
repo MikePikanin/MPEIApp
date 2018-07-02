@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -33,7 +34,6 @@ import java.util.Date;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,19 +46,17 @@ import ru.mpei.mpei_pk.activities.MainActivity;
 import ru.mpei.mpei_pk.adapters.ListNewsAdapter;
 import ru.mpei.mpei_pk.dataTypes.ItemNews;
 
-import static ru.mpei.mpei_pk.activities.MainActivity.timer;
-
 public class FragmentMain extends Fragment{
 
     private ProtocolMPEI protocolMPEI;
-    private MyTimerTask timerTask;
     private Context context;
-    private static boolean runTimer = true;
 
     private ExpandableLayout expQueue;
     private ExpandableLayout expRooms;
     private ExpandableLayout expNews;
 
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private ProgressBar progressBar;
 
     public FragmentMain() {
         // Required empty public constructor
@@ -72,7 +70,6 @@ public class FragmentMain extends Fragment{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         protocolMPEI = new ProtocolMPEI(context);
-        timerTask = new MyTimerTask();
     }
 
     @Override
@@ -88,6 +85,8 @@ public class FragmentMain extends Fragment{
         try {
             NavigationView navigation =  ((Activity)context).findViewById(R.id.nav_view);
             navigation.getMenu().getItem(0).setChecked(true);
+
+            progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
 
             expQueue = ((Activity)context).findViewById(R.id.expandableQueue);
             expRooms = ((Activity)context).findViewById(R.id.expandableRooms);
@@ -146,6 +145,41 @@ public class FragmentMain extends Fragment{
                 }
             });
 
+            mSwipeRefreshLayout = ((Activity)context).findViewById(R.id.swipe_container_main);
+            mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    try {
+                        Date now = new Date();
+                        Calendar calendar = Calendar.getInstance(new Locale("ru", "RU"));
+                        calendar.setTime(now);
+                        int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+                        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+                        String queue_load = protocolMPEI.get_queue_load();
+                        boolean flzero = false;
+                        try {
+                            if (Integer.parseInt(queue_load.split("&")[0]) > 0){
+                                flzero = true;
+                            }
+                        } catch (Exception e) {
+                            flzero = false;
+                        }
+
+                        if (day > 0 && day <= 5 && hour >= 10 && ((hour < 17 && day == 5) || hour < 18 || flzero)) {
+                            String queue_numbers = protocolMPEI.get_queue_numbers();
+
+                            displayQueue(queue_load);
+                            displayRooms(queue_numbers);
+                        }
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    } catch (Exception e) {
+                        Log.e("FragmentMain", e.getMessage());
+                    }
+                }
+            });
+
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -159,7 +193,6 @@ public class FragmentMain extends Fragment{
                         ((MainActivity) context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                 progressBar.setVisibility(ProgressBar.VISIBLE);
                             }
                         });
@@ -202,12 +235,21 @@ public class FragmentMain extends Fragment{
                         } catch (Exception e) {
                             Log.e("FragmentMain", e.getMessage());
                         }
-                        if (day >= 1 && day <= 5 && hour >= 10 && (((hour <= 17 && day == 5) || hour <= 18))) {// || flzero)) {
+
+                        String queue_load = protocolMPEI.get_queue_load();
+                        boolean flzero = false;
+                        try {
+                            if (Integer.parseInt(queue_load.split("&")[0]) > 0){
+                                flzero = true;
+                            }
+                        } catch (Exception e) {
+                            flzero = false;
+                        }
+
+                        if (day >= 1 && day <= 5 && hour >= 10 && ((hour < 17 && day == 5) || hour < 18 || flzero)) {
                             String queue_numbers = protocolMPEI.get_queue_numbers();
-                            String queue_load = protocolMPEI.get_queue_load();
                             displayRooms(queue_numbers);
                             displayQueue(queue_load);
-                            timer.schedule(timerTask, 30000, 30000);
                         }
 
                         ((MainActivity) context).runOnUiThread(new Runnable() {
@@ -215,7 +257,6 @@ public class FragmentMain extends Fragment{
                             public void run() {
                                 drawNews();
 
-                                ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                 progressBar.setVisibility(ProgressBar.INVISIBLE);
 
                                 expQueue.show();
@@ -233,32 +274,6 @@ public class FragmentMain extends Fragment{
     }
 
     @Override
-    public void onPause() {
-        runTimer = false;
-        super.onPause();
-    }
-
-    @Override
-    public void onResume() {
-        runTimer = true;
-        super.onResume();
-    }
-
-    @Override
-    public void onDestroy() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
-        }
-        super.onDestroy();
-    }
-
-    @Override
     public void onAttach(Context context) {
         this.context = context;
         super.onAttach(context);
@@ -269,32 +284,6 @@ public class FragmentMain extends Fragment{
         super.onDetach();
     }
 
-    class MyTimerTask extends TimerTask {
-        @Override
-        public void run() {
-            try {
-                if (runTimer) {
-                    Date now = new Date();
-                    Calendar calendar = Calendar.getInstance(new Locale("ru", "RU"));
-                    calendar.setTime(now);
-                    int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-                    int hour = calendar.get(Calendar.HOUR_OF_DAY);
-
-                    if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {
-                        String queue_load = protocolMPEI.get_queue_load();
-                        String queue_numbers = protocolMPEI.get_queue_numbers();
-
-                        displayQueue(queue_load);
-                        displayRooms(queue_numbers);
-                    }
-                } else {
-                    this.cancel();
-                }
-            } catch (Exception e) {
-                Log.e("FragmentMain", e.getMessage());
-            }
-        }
-    }
     private void displayQueue(final String queue)
     {
         try {
@@ -443,7 +432,7 @@ public class FragmentMain extends Fragment{
                 ((Activity) context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        TableLayout table = ((Activity)context).findViewById(R.id.queue_reserve_table);
+                        TableLayout table = ((Activity)context).findViewById(R.id.queue_rooms_table);
                         table.removeAllViews();
                         table.setStretchAllColumns(true);
                         table.setShrinkAllColumns(true);

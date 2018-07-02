@@ -13,9 +13,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import ru.mpei.mpei_pk.ProtocolMPEI;
 import ru.mpei.mpei_pk.R;
+import ru.mpei.mpei_pk.activities.MainActivity;
 import ru.mpei.mpei_pk.activities.WebActivity;
 
 public class FragmentEdit extends Fragment {
@@ -53,6 +55,13 @@ public class FragmentEdit extends Fragment {
                         @Override
                         public void run() {
                             //Авторизация
+                            ((MainActivity) context).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
+                                    progressBar.setVisibility(ProgressBar.VISIBLE);
+                                }
+                            });
                             ProtocolMPEI protocolMPEI = new ProtocolMPEI(context);
                             String ticket = protocolMPEI.ticketAuth();
 
@@ -60,6 +69,15 @@ public class FragmentEdit extends Fragment {
                             String nickname = sharedPref.getString("nickname", "");
 
                             String url = "https://www.pkmpei.ru/index.php?cmd=ticket&logon_name=" + nickname + "&logon_ticket=" + ticket;
+
+                            ((MainActivity) context).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
+                                    progressBar.setVisibility(ProgressBar.INVISIBLE);
+                                }
+                            });
+
                             Intent intent = new Intent(context, WebActivity.class);
                             intent.putExtra("url", url);
                             startActivity(intent);

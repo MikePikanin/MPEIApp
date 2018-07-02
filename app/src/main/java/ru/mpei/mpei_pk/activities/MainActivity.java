@@ -43,9 +43,6 @@ public class MainActivity extends AppCompatActivity
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
-    //Статичный таймер, который используется в фрагментах для обновления информации, сам таймер не
-    // останавливается, только изменяются его задачи TimerTask
-    static public Timer timer = new Timer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

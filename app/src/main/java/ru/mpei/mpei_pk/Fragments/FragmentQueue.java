@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -25,21 +26,17 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.security.acl.Group;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.TimerTask;
 import java.util.TreeSet;
 
 import ru.mpei.mpei_pk.ProtocolMPEI;
 import ru.mpei.mpei_pk.R;
 import ru.mpei.mpei_pk.activities.MainActivity;
-
-import static ru.mpei.mpei_pk.activities.MainActivity.timer;
 
 
 public class FragmentQueue extends Fragment {
@@ -47,12 +44,8 @@ public class FragmentQueue extends Fragment {
     private ProtocolMPEI protocolMPEI;
     private Context context;
 
-    private String VisitType;
-    private String EducationLevel;
-    private String OnlyPayForm;
-
-    private MyTimerTask timerTask;
-    private static boolean runTimer = true;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private ProgressBar progressBar;
 
     public FragmentQueue() {
         // Required empty public constructor
@@ -60,32 +53,6 @@ public class FragmentQueue extends Fragment {
 
     public static FragmentQueue newInstance() {//int VisitType, int EducationLevel) {
         return new FragmentQueue();
-    }
-
-
-    @Override
-    public void onDestroy() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentQueue", e.getMessage());
-        }
-        super.onDestroy();
-    }
-    @Override
-    public void onPause() {
-        runTimer = false;
-        super.onPause();
-    }
-
-    @Override
-    public void onResume() {
-        runTimer = true;
-        super.onResume();
     }
 
     @Override
@@ -98,17 +65,39 @@ public class FragmentQueue extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         try {
+            progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
+
             ((MainActivity)context).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     NavigationView navigation = ((Activity)context).findViewById(R.id.nav_view);
                     navigation.getMenu().getItem(1).setChecked(true);
-                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
-                    progressBar.setVisibility(ProgressBar.VISIBLE);
                 }
             });
-            timerTask = new MyTimerTask();
-            new MyThread().start();
+
+            mSwipeRefreshLayout = ((Activity)context).findViewById(R.id.swipe_container_queue);
+            mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    try {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                drawPage();
+                            }
+                        }).start();
+                    } catch (Exception e) {
+                        Log.e("FragmentQueue", e.getMessage());
+                    }
+                }
+            });
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    drawPage();
+                }
+            }).start();
         } catch (Exception e) {
             Log.e("FragmentQueue", e.getMessage());
         }
@@ -132,114 +121,85 @@ public class FragmentQueue extends Fragment {
         super.onDetach();
     }
 
-    private class MyThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                HashMap<String, String> map = protocolMPEI.get_person_info();
-                if (map != null) {
-                    if (map.containsKey("error")) {
-                        try {
-                            final String error = map.get("error");
-                            drawError(error);
-                            ((MainActivity) context).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
-                                    progressBar.setVisibility(ProgressBar.INVISIBLE);
-                                }
-                            });
-                        } catch (Exception e) {
-                            Log.e("FragmentQueue", e.getMessage());
-                        }
-                    } else {
-                        VisitType = map.get("VisitType");
-                        EducationLevel = map.get("EducationLevel");
-                        OnlyPayForm = map.get("OnlyPayForm");
-                        final String idReserve = map.get("IdReserve");
-                        int id_reserve;
-                        try {
-                            id_reserve = Integer.parseInt(idReserve);
-                        } catch (Exception e) {
-                            id_reserve = 0;
-                        }
-                        if (id_reserve > 0 && map.get("ReserveStatus").equals("OK")) {
-                            String txtInterval = map.get("ReserveInterval");
-                            String txtEduLevel = map.get("ReserveEducationLevel");
-                            String txtVisitType = map.get("ReserveVisitType");
-                            final String reservedInfo = "Вами зарезервировано место в очереди на " + txtVisitType + " (" + txtEduLevel + ") " + txtInterval + ".";
-                            drawCancelReserve(idReserve, reservedInfo);
-                            ((MainActivity) context).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
-                                    progressBar.setVisibility(ProgressBar.INVISIBLE);
-                                }
-                            });
-                        } else {
-                            final String answer;
-                            if (VisitType != null && EducationLevel != null && OnlyPayForm != null) {
-                                answer = protocolMPEI.get_reserve_room(VisitType, EducationLevel, OnlyPayForm);
-                            } else {
-                                answer = null;
-                            }
-                            if (answer != null) {
-                                drawTable(answer);
-                                timer.schedule(timerTask, 30000, 30000);
-                            } else {
-                                drawError(null);
-                            }
-                            //Сокрытие полосы загрузки.
-                            ((MainActivity) context).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
-                                    progressBar.setVisibility(ProgressBar.INVISIBLE);
-                                }
-                            });
-                        }
+    private void drawPage() {
+        try {
+            if (!mSwipeRefreshLayout.isRefreshing()) {
+                ((MainActivity) context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(ProgressBar.VISIBLE);
+                    }
+                });
+            }
+
+            HashMap<String, String> map = protocolMPEI.get_person_info();
+            if (map != null) {
+                if (map.containsKey("error")) {
+                    try {
+                        final String error = map.get("error");
+                        drawError(error);
+                    } catch (Exception e) {
+                        Log.e("FragmentQueue", e.getMessage());
                     }
                 } else {
-                    drawError(null);
-                    ((MainActivity) context).runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
-                            progressBar.setVisibility(ProgressBar.INVISIBLE);
+                    String VisitType = map.get("VisitType");
+                    String EducationLevel = map.get("EducationLevel");
+                    String OnlyPayForm = map.get("OnlyPayForm");
+                    final String idReserve = map.get("IdReserve");
+                    int id_reserve;
+                    try {
+                        id_reserve = Integer.parseInt(idReserve);
+                    } catch (Exception e) {
+                        id_reserve = 0;
+                    }
+                    if (id_reserve > 0 && map.get("ReserveStatus").equals("OK")) {
+                        String txtInterval = map.get("ReserveInterval");
+                        String txtEduLevel = map.get("ReserveEducationLevel");
+                        String txtVisitType = map.get("ReserveVisitType");
+                        final String reservedInfo = "Вами зарезервировано место в очереди на " + txtVisitType + " (" + txtEduLevel + ") " + txtInterval + ".";
+                        drawCancelReserve(idReserve, reservedInfo);
+                    } else {
+                        final String answer;
+                        if (VisitType != null && EducationLevel != null && OnlyPayForm != null) {
+                            answer = protocolMPEI.get_reserve_room(VisitType, EducationLevel, OnlyPayForm);
+                        } else {
+                            answer = null;
                         }
-                    });
+                        if (answer != null) {
+                            drawTable(answer);
+                        } else {
+                            drawError(null);
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                Log.e("FragmentQueue", e.getMessage());
+            } else {
+                drawError(null);
             }
+            ((MainActivity) context).runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mSwipeRefreshLayout.isRefreshing()) {
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    } else {
+                        progressBar.setVisibility(ProgressBar.INVISIBLE);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.e("FragmentQueue", e.getMessage());
         }
     }
 
-    private class MyTimerTask extends TimerTask {
-        @Override
-        public void run() {
-            if (runTimer) {
-                try {
-                    String s = protocolMPEI.get_reserve_room(VisitType, EducationLevel, OnlyPayForm);
-                    if (s != null) {
-                        drawTable(s);
-                    } else {
-                        drawError(null);
-                    }
-                } catch (Exception e) {
-                    Log.e("FragmentQueueTimerTask", e.getMessage());
-                }
-            } else {
-                this.cancel();
-            }
-        }
-    }
     private void drawError(String error) {
         try {
             if (error == null) {
                 error = "\nВ данный момент резервирование невозможно, попробуйте позднее.";
             }
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics());
             final ArrayList<View> tableRowList = new ArrayList<>();
+            TableRow.LayoutParams itemParamsTxt = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2f);
+            itemParamsTxt.leftMargin = margin;
+            itemParamsTxt.topMargin = margin;
 
             TableRow tableRow;
             TextView textView;
@@ -249,13 +209,14 @@ public class FragmentQueue extends Fragment {
             textView = new TextView(context);
             textView.setText(error);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-            textView.setGravity(Gravity.CENTER);
+            textView.setLayoutParams(itemParamsTxt);
             tableRow.addView(textView);
             tableRowList.add(tableRow);
 
             ((Activity) context).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mSwipeRefreshLayout.setEnabled(false);
                     TableLayout table = ((Activity)context).findViewById(R.id.queue_reserve_table);
                     table.removeAllViews();
                     table.setStretchAllColumns(true);
@@ -318,17 +279,14 @@ public class FragmentQueue extends Fragment {
                         @Override
                         public void run() {
                             try {
-                                timerTask = new MyTimerTask();
                                 ((MainActivity) context).runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                         progressBar.setVisibility(ProgressBar.VISIBLE);
                                     }
                                 });
 
                                 String s = protocolMPEI.queue_reserve(id_reserve, 1);
-                                String answer = null;
                                 final String message;
                                 if (s != null) {
                                     if (s.equals("REJECTED")) {
@@ -336,26 +294,22 @@ public class FragmentQueue extends Fragment {
                                     } else {
                                         message = "Резерв уже был отменен";
                                     }
-                                    if (VisitType != null && EducationLevel != null && OnlyPayForm != null) {
-                                        answer = protocolMPEI.get_reserve_room(VisitType, EducationLevel, OnlyPayForm);
-                                    }
                                 } else {
                                     message = "Ошибка, попробуйте позднее";
                                 }
-                                if (answer != null) {
-                                    drawTable(answer);
-                                } else {
-                                    new MyThread().start();
+                                try {
+                                    drawPage();
+                                } catch (Exception e) {
+                                    Log.e("FragmentQueue", e.getMessage());
                                 }
+
                                 ((MainActivity) context).runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-                                        ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                         progressBar.setVisibility(ProgressBar.INVISIBLE);
                                     }
                                 });
-                                runTimer = true;
                             } catch (Exception e) {
                                 Log.e("FragmentQueue", e.getMessage());
                             }
@@ -379,6 +333,7 @@ public class FragmentQueue extends Fragment {
             ((Activity) context).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mSwipeRefreshLayout.setEnabled(false);
                     TableLayout table = ((Activity)context).findViewById(R.id.queue_reserve_table);
                     table.removeAllViews();
                     table.setStretchAllColumns(true);
@@ -402,6 +357,7 @@ public class FragmentQueue extends Fragment {
                 JSONObject jo_int = jsonObj.getJSONObject("intervals");
                 JSONArray intervals = jo_int.toJSONArray(jo_int.names());
                 TreeSet<String> tree = new TreeSet<>();
+
                 for(int i = 0; i < intervals.length(); i++) {
                     tree.add(intervals.getJSONObject(i).getString("IdTimeInterval"));
                 }
@@ -521,7 +477,6 @@ public class FragmentQueue extends Fragment {
                                                 ((MainActivity) context).runOnUiThread(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                                         progressBar.setVisibility(ProgressBar.VISIBLE);
                                                     }
                                                 });
@@ -534,8 +489,6 @@ public class FragmentQueue extends Fragment {
                                                         if (map != null) {
                                                             String txtStatus = map.get("ReserveStatus");
                                                             if (txtStatus.equals("OK")) {
-                                                                timerTask.cancel();
-                                                                runTimer = false;
                                                                 message = "Очередь зарезервирована!";
 
                                                                 String txtInterval = map.get("ReserveInterval");
@@ -544,11 +497,9 @@ public class FragmentQueue extends Fragment {
                                                                 info = txtInterval + " " + txtEduLevel + " " + txtVisitType;
                                                             } else {
                                                                 message = "Произошла ошибка, попробуйте позднее";
-                                                                new MyThread().start();
                                                             }
                                                         } else {
                                                             message = "Произошла ошибка, попробуйте позднее";
-                                                            new MyThread().start();
                                                         }
                                                     } else if (s.startsWith("OVERLOAD")) {
                                                         message = "К сожалению мест не осталось";
@@ -556,20 +507,19 @@ public class FragmentQueue extends Fragment {
                                                         message = "Место уже было зарезивировано";
                                                     } else {
                                                         message = "Произошла ошибка, попробуйте позднее";
-                                                        new MyThread().start();
                                                     }
                                                 } else {
                                                     message = "Произошла ошибка, попробуйте позднее";
-                                                    new MyThread().start();
                                                 }
                                                 if (s != null && s.startsWith("RESERVED") && info != null) {
                                                     drawCancelReserve(s.split("&")[1], info);
+                                                } else {
+                                                    drawPage();
                                                 }
                                                 ((MainActivity) context).runOnUiThread(new Runnable() {
                                                     @Override
                                                     public void run() {
                                                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-                                                        ProgressBar progressBar = ((MainActivity) context).findViewById(R.id.progressBarMain);
                                                         progressBar.setVisibility(ProgressBar.INVISIBLE);
                                                     }
                                                 });
@@ -612,6 +562,7 @@ public class FragmentQueue extends Fragment {
                 ((Activity) context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        mSwipeRefreshLayout.setEnabled(true);
                         TableLayout table = ((Activity)context).findViewById(R.id.queue_reserve_table);
                         table.removeAllViews();
                         table.setStretchAllColumns(true);
