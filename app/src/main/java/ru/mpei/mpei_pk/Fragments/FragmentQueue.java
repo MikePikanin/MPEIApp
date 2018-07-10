@@ -156,7 +156,7 @@ public class FragmentQueue extends Fragment {
                         String txtInterval = map.get("ReserveInterval");
                         String txtEduLevel = map.get("ReserveEducationLevel");
                         String txtVisitType = map.get("ReserveVisitType");
-                        final String reservedInfo = "Вами зарезервировано место в очереди на " + txtVisitType + " (" + txtEduLevel + ") " + txtInterval + ".";
+                        String reservedInfo = "Вами зарезервировано место в очереди на " + txtVisitType + " (" + txtEduLevel + ") " + txtInterval + ".";
                         drawCancelReserve(idReserve, reservedInfo);
                     } else {
                         final String answer;
@@ -494,7 +494,7 @@ public class FragmentQueue extends Fragment {
                                                                 String txtInterval = map.get("ReserveInterval");
                                                                 String txtEduLevel = map.get("ReserveEducationLevel");
                                                                 String txtVisitType = map.get("ReserveVisitType");
-                                                                info = txtInterval + " " + txtEduLevel + " " + txtVisitType;
+                                                                info = "Вами зарезервировано место в очереди на " + txtVisitType + " (" + txtEduLevel + ") " + txtInterval + ".";
                                                             } else {
                                                                 message = "Произошла ошибка, попробуйте позднее";
                                                             }
