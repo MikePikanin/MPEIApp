@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import com.andexert.expandablelayout.library.ExpandableLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -37,6 +39,7 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.ailis.pherialize.Mixed;
 import de.ailis.pherialize.MixedArray;
 import de.ailis.pherialize.Pherialize;
 
@@ -76,7 +79,7 @@ public class FragmentMain extends Fragment{
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_main, container, false);
@@ -172,6 +175,7 @@ public class FragmentMain extends Fragment{
                             SharedPreferences sharedPref = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
                             int token = sharedPref.getInt("newsToken", 0);
                             String news = protocolMPEI.get_news(Integer.toString(token));
+                            //Log.d("")
 
                             if (news != null) {
                                 MixedArray mixedArray = Pherialize.unserialize(news).toArray();
@@ -191,6 +195,15 @@ public class FragmentMain extends Fragment{
                                     if (mixedArray.containsKey("Actual")) {
                                         MixedArray m = mixedArray.getArray("Actual");
                                         for (Object key : m.keySet()) {
+                                            Object value = m.get(key);
+                                            MixedArray news_object;
+                                            if (value instanceof Mixed) {
+                                                news_object = (MixedArray) ((Mixed) value).getValue();
+                                                if (news_object != null) news_object.put("txt", news_object.getString("txt").replace("\r", ""));
+                                            }
+                                                //editor.putString(key.toString(), Pherialize.serialize(((String) value).replace("\r", "")));
+                                                Log.d("instance check", "instance of itemNews");
+
                                             editor.putString(key.toString(), Pherialize.serialize(m.get(key)));
                                         }
                                     }
@@ -229,7 +242,7 @@ public class FragmentMain extends Fragment{
             }).start();
 
         } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
+            Log.e("FragmentMain2", e.toString());
         }
     }
 
@@ -242,7 +255,7 @@ public class FragmentMain extends Fragment{
                 timerTask = null;
             }
         } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
+            Log.e("FragmentMain3", e.getMessage());
         }
         super.onPause();
     }
@@ -261,7 +274,7 @@ public class FragmentMain extends Fragment{
                     timer.schedule(timerTask, 30000, 30000);
                 }
             } catch (Exception e) {
-                Log.e("FragmentMain", e.getMessage());
+                Log.e("FragmentMain4", e.getMessage());
             }
         }
         super.onResume();
@@ -276,7 +289,7 @@ public class FragmentMain extends Fragment{
                 timerTask = null;
             }
         } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
+            Log.e("FragmentMain5", e.getMessage());
         }
         super.onDestroy();
     }
@@ -290,7 +303,7 @@ public class FragmentMain extends Fragment{
                 timerTask = null;
             }
         } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
+            Log.e("FragmentMain6", e.getMessage());
         }
         super.onStop();
     }
@@ -333,7 +346,7 @@ public class FragmentMain extends Fragment{
                     this.cancel();
                 }
             } catch (Exception e) {
-                Log.e("FragmentMain", e.getMessage());
+                Log.e("FragmentMain7", e.getMessage());
             }
         }
     }
@@ -483,11 +496,11 @@ public class FragmentMain extends Fragment{
                 expRooms.setVisibility(View.GONE);
             }
         } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
+            Log.e("FragmentMain8", e.getMessage());
         }
     }
     private void drawNews() {
-        try {
+        //try {
             SharedPreferences sharedPref = context.getSharedPreferences("news", Context.MODE_PRIVATE);
             Map<String, ?> map = sharedPref.getAll();
             ArrayList<ItemNews> news = null;
@@ -499,7 +512,22 @@ public class FragmentMain extends Fragment{
                         break;
                     }
                     if (map.get(key) instanceof String) {
-                        MixedArray m = Pherialize.unserialize((String) map.get(key)).toArray();
+                        char[] serArray = ((String) map.get(key)).toCharArray();
+                        StringBuilder debugSerObject = new StringBuilder();
+                        for (int i = 0 ; i < serArray.length ; i ++)
+                        {   debugSerObject.append(i).append("\t");
+                            debugSerObject.append((int) serArray[i]);
+                            debugSerObject.append("\r\n");
+                        }
+                        Log.d("Serialized object " + key, Arrays.toString(serArray));
+                        MixedArray m = null;
+                        try {
+                            m = Pherialize.unserialize((String) map.get(key)).toArray();
+                        }catch (Exception e)
+                        {
+                            Log.e("News unserialize key " + key, e.toString()  );
+                        }
+                        if (m == null) continue;
                         if (m.getString("top").equals("1")) {
                             ItemNews item = new ItemNews();
                             item.setId(m.getString("id"));
@@ -524,9 +552,9 @@ public class FragmentMain extends Fragment{
             } else {
                 expNews.setVisibility(View.GONE);
             }
-        } catch (Exception e) {
-            Log.e("FragmentMain", e.getMessage());
-        }
+       // } catch (Exception e) {
+       //     Log.e("FragmentMain9", e.toString()  );
+       // }
     }
     private View getHorizontalBorder()
     {
