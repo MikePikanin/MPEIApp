@@ -36,56 +36,15 @@ public class LoginActivity extends AppCompatActivity{
         //Если в памяти есть сохраненный ник, выводим в поле для ввода логина.
         SharedPreferences sharedPref = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
         String savedNickname = sharedPref.getString("nickname", null);
-        if (savedNickname != null){
-            loginTXT.setText(savedNickname);
-        }
-        final Context context = this;
+        if (savedNickname != null) loginTXT.setText(savedNickname);
         //Обработчик нажатия на кнопку вход.
         logBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Получение логина и пароля.
-                final String login = loginTXT.getText().toString();
-                final String password = passTXT.getText().toString();
-                //Проверка, на введеные поля.
-                if (login.isEmpty() || password.isEmpty()) {
-                    Toast.makeText( v.getContext(),  "Введите логин и пароль!", Toast.LENGTH_LONG).show();
-                }
-                else {
-                    //Вывод полосы загрузки.
-                    ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
-                    progressBar.setVisibility(ProgressBar.VISIBLE);
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //Авторизация
-                            ProtocolMPEI protocolMPEI = new ProtocolMPEI(context);
-                            if (protocolMPEI.auth(login, password)) {
-                                Intent intent = new Intent(context, MainActivity.class);
-                                startActivity(intent);
-
-                                ((Activity)context).finish();
-                            } else {
-                                //Сокрытие полосы загрузки.
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
-                                        progressBar.setVisibility(ProgressBar.INVISIBLE);
-                                        Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();
-                                        EditText passTXT = findViewById(R.id.passwordTXT);
-                                        passTXT.setText("");
-                                    }
-                                });
-                            }
-                        }
-                    }).start();
-                }
+                Login();
             }
         });
         //Обработчик нажатия кнопки перехода на страницу регистрации.
-
         gotoReg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,6 +54,51 @@ public class LoginActivity extends AppCompatActivity{
             }
         });
 
+    }
+    private  void  Login()
+    {
+        //Получение логина и пароля.
+        final String login = loginTXT.getText().toString();
+        final String password = passTXT.getText().toString();
+        //Проверка, на введеные поля.
+        if (login.isEmpty() || password.isEmpty()) {
+            Toast.makeText( this,  "Введите логин и пароль!", Toast.LENGTH_LONG).show();
+        }
+        else {
+            //Вывод полосы загрузки.
+            progressBar.setVisibility(ProgressBar.VISIBLE);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    //Авторизация
+                    ProtocolMPEI protocolMPEI = new ProtocolMPEI(getApplicationContext());
+                    if (protocolMPEI.auth(login, password)) {
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        startActivity(intent);
+
+//                        ((Activity)getApplicationContext()).finish();
+                    } else {
+                        //Сокрытие полосы загрузки.
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                FailedLogin();
+                            }
+                        });
+                    }
+                }
+            }).start();
+        }
+
+    }
+
+    private void  FailedLogin()
+    {
+       // ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
+        progressBar.setVisibility(ProgressBar.INVISIBLE);
+        Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();
+        //EditText passTXT = findViewById(R.id.passwordTXT);
+        passTXT.setText("");
     }
 
     private  void  initActivity()

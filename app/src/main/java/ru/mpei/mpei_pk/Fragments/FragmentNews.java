@@ -100,6 +100,7 @@ public class FragmentNews extends Fragment {
                     expView.expandGroup(num);
                 }
             } else {
+
                 TextView textView = ((Activity)context).findViewById(R.id.newsErrorView);
                 textView.setVisibility(View.VISIBLE);
             }
