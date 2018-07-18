@@ -16,33 +16,36 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import ru.mpei.mpei_pk.BuildConfig;
 import ru.mpei.mpei_pk.ProtocolMPEI;
 import ru.mpei.mpei_pk.R;
 
 public class LoginActivity extends AppCompatActivity{
 
+    EditText loginTXT;
+    Button logBtn;
+    EditText passTXT;
+    ProgressBar progressBar;
+    TextView gotoReg;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        initActivity();
         //Если в памяти есть сохраненный ник, выводим в поле для ввода логина.
         SharedPreferences sharedPref = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
         String savedNickname = sharedPref.getString("nickname", null);
         if (savedNickname != null){
-            EditText loginTXT = (EditText)findViewById(R.id.loginTXT);
             loginTXT.setText(savedNickname);
         }
         final Context context = this;
         //Обработчик нажатия на кнопку вход.
-        Button logBtn = (Button) findViewById(R.id.loginBtn);
         logBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //Получение логина и пароля.
-                EditText loginTXT = (EditText)findViewById(R.id.loginTXT);
                 final String login = loginTXT.getText().toString();
-                EditText passTXT = (EditText)findViewById(R.id.passwordTXT);
                 final String password = passTXT.getText().toString();
                 //Проверка, на введеные поля.
                 if (login.isEmpty() || password.isEmpty()) {
@@ -50,7 +53,7 @@ public class LoginActivity extends AppCompatActivity{
                 }
                 else {
                     //Вывод полосы загрузки.
-                    ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBarLogin);
+                    ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
                     progressBar.setVisibility(ProgressBar.VISIBLE);
 
                     new Thread(new Runnable() {
@@ -68,10 +71,10 @@ public class LoginActivity extends AppCompatActivity{
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBarLogin);
+                                        ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
                                         progressBar.setVisibility(ProgressBar.INVISIBLE);
                                         Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();
-                                        EditText passTXT = (EditText) findViewById(R.id.passwordTXT);
+                                        EditText passTXT = findViewById(R.id.passwordTXT);
                                         passTXT.setText("");
                                     }
                                 });
@@ -82,7 +85,7 @@ public class LoginActivity extends AppCompatActivity{
             }
         });
         //Обработчик нажатия кнопки перехода на страницу регистрации.
-        TextView gotoReg = (TextView) findViewById(R.id.gotoRegPageTextView);
+
         gotoReg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,6 +96,21 @@ public class LoginActivity extends AppCompatActivity{
         });
 
     }
+
+    private  void  initActivity()
+    {
+        loginTXT = findViewById(R.id.loginTXT);
+        logBtn = findViewById(R.id.loginBtn);
+        progressBar = findViewById(R.id.progressBarLogin);
+        passTXT = findViewById(R.id.passwordTXT);
+        gotoReg = findViewById(R.id.gotoRegPageTextView);
+        if (BuildConfig.DEBUG) {
+            loginTXT.setText(R.string.debugLogin);
+            passTXT.setText(R.string.debugPass);
+        }
+
+    }
+
     @Override
     public void onBackPressed() {
         new AlertDialog.Builder(this)

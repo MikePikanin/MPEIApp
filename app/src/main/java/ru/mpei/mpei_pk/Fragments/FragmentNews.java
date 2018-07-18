@@ -5,6 +5,7 @@ import android.content.Context;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -45,7 +46,7 @@ public class FragmentNews extends Fragment {
 
     @Override
     public void onResume() {
-        NavigationView navigation = (NavigationView) ((Activity)context).findViewById(R.id.nav_view);
+        NavigationView navigation = ((Activity)context).findViewById(R.id.nav_view);
         navigation.getMenu().getItem(3).setChecked(true);
         super.onResume();
     }
@@ -110,7 +111,7 @@ public class FragmentNews extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_news, container, false);
