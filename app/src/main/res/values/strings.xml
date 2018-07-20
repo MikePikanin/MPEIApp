@@ -43,6 +43,8 @@
     <string name="user_info">Вы успешно зарегистрированы!\nПожалуйста, запомните Ваши данные для входа в свой аккаунт:\nЛогин - <b>%s</b>\nПароль - <b>%s</b>;</string>
     <string name="docsEditMsg">Подача документов в мобильном приложении временно недоступна. Чтобы заполнить документы на сайте нажмите конпку \"Перейти на сайт\".</string>
     <string name="openWebBtn">Перейти на сайт</string>
+    <string name="debugLogin">PetrovAR1996</string>
+    <string name="debugPass">2YAjer.B</string>
     <string-array name="passRestoreQuestions">
         <item>Девичья фамилия Вашей матери?</item>
         <item>Кличка Вашего первого питомца?</item>
@@ -51,6 +53,4 @@
         <item>Куда Вы впервые полетели на самолете?</item>
     </string-array>
     <string name="siteCommonPubKey">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz6xirYMIGw9obXGuN5TomjPwiCfQKUsdOgktygiiwwCGx5FqMxPf32VFWMEAiTWTKCnSxlS45+3mugXnkcyz6ltKslf16ON1LEERV0HQWq+WzFm1KN/QabG1Slj0JqTYVptnuwsMSl0cYrXQY/OuwbmE+5cR3p7LjwelKyzLnl9u7O/DjE1R3RsCqbZtmYlSWDBBYFUm1B+aBWwUnBid4poyQo3kqMV7TWzgpi+8vZPvVK8OAPHqdg2Ub/XDxi434Mmr+AmEbsy1GvQONg/iW1sq0Q4s++sLv4qThaS5zqk0mU3KDWyVvgvqWhguvjNM2g+kIwQ8f1IHSL03X3HUtQIDAQAB</string>
-    <string name="debugLogin">PetrovAR1996</string>
-    <string name="debugPass">2YAjer.B</string>
 </resources>

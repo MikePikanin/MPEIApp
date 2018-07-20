@@ -3,6 +3,7 @@ package ru.mpei.mpei_pk.Fragments;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,6 +14,10 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -156,26 +161,38 @@ public class FragmentMain extends Fragment{
                         Date now = new Date();
                         Calendar calendar = Calendar.getInstance(new Locale("ru", "RU"));
                         calendar.setTime(now);
-                        int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-                        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                        final int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+                        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-                        String queue_load = protocolMPEI.get_queue_load();
-                        boolean flzero = false;
-                        try {
-                            if (Integer.parseInt(queue_load.split("&")[0]) > 0){
-                                flzero = true;
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String queue_load = protocolMPEI.get_queue_load();
+                                boolean flzero = false;
+                                try {
+                                    if (Integer.parseInt(queue_load.split("&")[0]) > 0){
+                                        flzero = true;
+                                    }
+                                } catch (Exception e) {
+                                    flzero = false;
+                                }
+
+                                if (day > 0 && day <= 5 && hour >= 10 && ((hour < 17 && day == 5) || hour < 18 || flzero)) {
+                                    String queue_numbers = protocolMPEI.get_queue_numbers();
+
+                                    displayQueue(queue_load);
+                                    displayRooms(queue_numbers);
+                                }
+
+                                ((Activity) context).runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mSwipeRefreshLayout.setRefreshing(false);
+                                    }
+                                });
                             }
-                        } catch (Exception e) {
-                            flzero = false;
-                        }
+                        }).start();
 
-                        if (day > 0 && day <= 5 && hour >= 10 && ((hour < 17 && day == 5) || hour < 18 || flzero)) {
-                            String queue_numbers = protocolMPEI.get_queue_numbers();
-
-                            displayQueue(queue_load);
-                            displayRooms(queue_numbers);
-                        }
-                        mSwipeRefreshLayout.setRefreshing(false);
                     } catch (Exception e) {
                         Log.e("FragmentMain", e.getMessage());
                     }
@@ -203,7 +220,6 @@ public class FragmentMain extends Fragment{
                             SharedPreferences sharedPref = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
                             int token = sharedPref.getInt("newsToken", 0);
                             String news = protocolMPEI.get_news(Integer.toString(token));
-                            //Log.d("")
 
                             if (news != null) {
                                 MixedArray mixedArray = Pherialize.unserialize(news).toArray();
@@ -228,9 +244,9 @@ public class FragmentMain extends Fragment{
                                             if (value instanceof Mixed) {
                                                 news_object = (MixedArray) ((Mixed) value).getValue();
                                                 if (news_object != null) news_object.put("txt", news_object.getString("txt").replace("\r", ""));
-                                            }
+                                                }
                                                 //editor.putString(key.toString(), Pherialize.serialize(((String) value).replace("\r", "")));
-                                                Log.d("instance check", "instance of itemNews");
+                                            Log.d("instance check", "instance of itemNews");
 
                                             editor.putString(key.toString(), Pherialize.serialize(m.get(key)));
                                         }
@@ -282,76 +298,11 @@ public class FragmentMain extends Fragment{
             }).start();
 
         } catch (Exception e) {
-            Log.e("FragmentMain2", e.toString());
+            Log.e("FragmentMain", e.getMessage());
         }
     }
 
     @Override
-<<<<<<< HEAD
-    public void onPause() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain3", e.getMessage());
-        }
-        super.onPause();
-    }
-
-    @Override
-    public void onResume() {
-        runTimer = true;
-        NavigationView navigation =  ((Activity)context).findViewById(R.id.nav_view);
-        navigation.getMenu().getItem(0).setChecked(true);
-        if (!firstTimer) {
-            try {
-                if (timer != null) {
-                    if (timerTask == null) {
-                        timerTask = new MyTimerTask();
-                    }
-                    timer.schedule(timerTask, 30000, 30000);
-                }
-            } catch (Exception e) {
-                Log.e("FragmentMain4", e.getMessage());
-            }
-        }
-        super.onResume();
-    }
-
-    @Override
-    public void onDestroy() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain5", e.getMessage());
-        }
-        super.onDestroy();
-    }
-
-    @Override
-    public void onStop() {
-        runTimer = false;
-        try {
-            if (timerTask != null) {
-                timerTask.cancel();
-                timerTask = null;
-            }
-        } catch (Exception e) {
-            Log.e("FragmentMain6", e.getMessage());
-        }
-        super.onStop();
-    }
-
-    @Override
-=======
->>>>>>> dev
     public void onAttach(Context context) {
         this.context = context;
         super.onAttach(context);
@@ -362,42 +313,7 @@ public class FragmentMain extends Fragment{
         super.onDetach();
     }
 
-<<<<<<< HEAD
-    class MyTimerTask extends TimerTask {
-        @Override
-        public void run() {
-            try {
-                if (runTimer) {
-                    Date now = new Date();
-                    Calendar calendar = Calendar.getInstance(new Locale("ru", "RU"));
-                    calendar.setTime(now);
-                    int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-                    int hour = calendar.get(Calendar.HOUR_OF_DAY);
-
-                    if (day > 0 && day <= 5 && hour >= 10 && (((hour < 17 && day == 5) || hour < 18))) {// || flzero)) {
-                        final String queue_load = protocolMPEI.get_queue_load();
-                        final String queue_numbers = protocolMPEI.get_queue_numbers();
-
-                        ((MainActivity) context).runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                displayQueue(queue_load);
-                                displayRooms(queue_numbers);
-                            }
-                        });
-                    }
-                } else {
-                    this.cancel();
-                }
-            } catch (Exception e) {
-                Log.e("FragmentMain7", e.getMessage());
-            }
-        }
-    }
-    private void displayQueue(String queue)
-=======
     private void displayQueue(final String queue)
->>>>>>> dev
     {
         try {
             ((Activity) context).runOnUiThread(new Runnable() {
@@ -507,19 +423,32 @@ public class FragmentMain extends Fragment{
                             try {
                                 m = r.matcher(ar[1 + 4 * i + 2 * j]);
                                 if (m.find()) {
-                                    numbers = "<span style='color:red'><b>" + m.group(1) + "</b></span>" + m.group(2);
+                                    numbers = m.group(1) + m.group(2) + " - ";
                                 }
-                                numbers += " - ";
                                 m = r.matcher(ar[1 + 4 * i + 2 * j + 1]);
                                 if (m.find()) {
-                                    numbers += "<span style='color:red'><b>" + m.group(1) + "</b></span>" + m.group(2);
+                                    numbers +=  m.group(1) + m.group(2);
                                 }
                             } catch (Exception e) {
                                 Log.e("Regex", e.getMessage());
                             }
                         }
                         textView = new TextView(context);
-                        textView.setText(Html.fromHtml(numbers));
+                        final Pattern p = Pattern.compile("([а-яА-Яa-zA-Z]+)?");
+                        final Matcher matcher = p.matcher(numbers);
+
+                        final SpannableStringBuilder spannable = new SpannableStringBuilder(numbers);
+                        while (matcher.find()) {
+                            if (matcher.end() - matcher.start() != 0) {
+                                    spannable.setSpan(
+                                            new ForegroundColorSpan(Color.RED), matcher.start(), matcher.end(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+                                    );
+                                    spannable.setSpan(
+                                            new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+                                    );
+                            }
+                        }
+                        textView.setText(spannable);
                         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
                         textView.setTextColor(context.getResources().getColor(R.color.colorBlack));
                         textView.setGravity(Gravity.CENTER);
@@ -545,6 +474,7 @@ public class FragmentMain extends Fragment{
                 ((Activity) context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+
                         TableLayout table = ((Activity)context).findViewById(R.id.queue_rooms_table);
                         table.removeAllViews();
                         table.setStretchAllColumns(true);
@@ -564,11 +494,12 @@ public class FragmentMain extends Fragment{
                 });
             }
         } catch (Exception e) {
-            Log.e("FragmentMain8", e.getMessage());
+            Log.e("FragmentMain", e.getMessage());
         }
     }
+
     private void drawNews() {
-        //try {
+        try {
             SharedPreferences sharedPref = context.getSharedPreferences("news", Context.MODE_PRIVATE);
             Map<String, ?> map = sharedPref.getAll();
             ArrayList<ItemNews> news = null;
@@ -580,10 +511,11 @@ public class FragmentMain extends Fragment{
                         break;
                     }
                     if (map.get(key) instanceof String) {
+                        //MixedArray m = Pherialize.unserialize((String) map.get(key)).toArray();
                         char[] serArray = ((String) map.get(key)).toCharArray();
                         StringBuilder debugSerObject = new StringBuilder();
-                        for (int i = 0 ; i < serArray.length ; i ++)
-                        {   debugSerObject.append(i).append("\t");
+                        for (int i = 0 ; i < serArray.length ; i ++) {
+                            debugSerObject.append(i).append("\t");
                             debugSerObject.append((int) serArray[i]);
                             debugSerObject.append("\r\n");
                         }
@@ -593,7 +525,7 @@ public class FragmentMain extends Fragment{
                             m = Pherialize.unserialize((String) map.get(key)).toArray();
                         }catch (Exception e)
                         {
-                            Log.e("News unserialize key " + key, e.toString()  );
+                                Log.e("News unserialize key " + key, e.toString()  );
                         }
                         if (m == null) continue;
                         if (m.getString("top").equals("1")) {
@@ -620,9 +552,9 @@ public class FragmentMain extends Fragment{
             } else {
                 expNews.setVisibility(View.GONE);
             }
-       // } catch (Exception e) {
-       //     Log.e("FragmentMain9", e.toString()  );
-       // }
+        } catch (Exception e) {
+            Log.e("FragmentMain", e.getMessage());
+        }
     }
     private View getHorizontalBorder()
     {

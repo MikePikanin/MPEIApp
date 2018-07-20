@@ -1,6 +1,5 @@
 package ru.mpei.mpei_pk.activities;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,7 +20,6 @@ import ru.mpei.mpei_pk.ProtocolMPEI;
 import ru.mpei.mpei_pk.R;
 
 public class LoginActivity extends AppCompatActivity{
-
     EditText loginTXT;
     Button logBtn;
     EditText passTXT;
@@ -41,53 +39,11 @@ public class LoginActivity extends AppCompatActivity{
         logBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-<<<<<<< HEAD
                 Login();
-=======
-                //Получение логина и пароля.
-                EditText loginTXT = (EditText)findViewById(R.id.loginTXT);
-                final String login = loginTXT.getText().toString();
-                EditText passTXT = (EditText)findViewById(R.id.passwordTXT);
-                final String password = passTXT.getText().toString();
-                //Проверка, на введеные поля.
-                if (login.isEmpty() || password.isEmpty()) {
-                    Toast.makeText( v.getContext(),  "Введите логин и пароль!", Toast.LENGTH_LONG).show();
-                }
-                else {
-                    //Вывод полосы загрузки.
-                    ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBarLogin);
-                    progressBar.setVisibility(ProgressBar.VISIBLE);
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //Авторизация
-                            ProtocolMPEI protocolMPEI = new ProtocolMPEI(context);
-                            if (protocolMPEI.auth(login, password)) {
-                                Intent intent = new Intent(context, MainActivity.class);
-                                startActivity(intent);
-
-                                ((Activity)context).finish();
-                            } else {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //Сокрытие полосы загрузки.
-                                        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBarLogin);
-                                        progressBar.setVisibility(ProgressBar.INVISIBLE);
-                                        Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();
-                                        EditText passTXT = (EditText) findViewById(R.id.passwordTXT);
-                                        passTXT.setText("");
-                                    }
-                                });
-                            }
-                        }
-                    }).start();
-                }
->>>>>>> dev
             }
         });
         //Обработчик нажатия кнопки перехода на страницу регистрации.
+        TextView gotoReg = findViewById(R.id.gotoRegPageTextView);
         gotoReg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -137,15 +93,14 @@ public class LoginActivity extends AppCompatActivity{
 
     private void  FailedLogin()
     {
-       // ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
+        // ProgressBar progressBar =  findViewById(R.id.progressBarLogin);
         progressBar.setVisibility(ProgressBar.INVISIBLE);
         Toast.makeText(getApplicationContext(), "Не удалось выполнить вход", Toast.LENGTH_SHORT).show();
         //EditText passTXT = findViewById(R.id.passwordTXT);
         passTXT.setText("");
     }
 
-    private  void  initActivity()
-    {
+    private  void  initActivity() {
         loginTXT = findViewById(R.id.loginTXT);
         logBtn = findViewById(R.id.loginBtn);
         progressBar = findViewById(R.id.progressBarLogin);
@@ -155,7 +110,6 @@ public class LoginActivity extends AppCompatActivity{
             loginTXT.setText(R.string.debugLogin);
             passTXT.setText(R.string.debugPass);
         }
-
     }
 
     @Override
