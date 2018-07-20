@@ -6,17 +6,18 @@ android {
         applicationId "ru.mpei.mpei_pk"
         minSdkVersion 16
         vectorDrawables.useSupportLibrary = true
-
         targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        versionName '1.0.3'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 4
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    productFlavors {
     }
 }
 

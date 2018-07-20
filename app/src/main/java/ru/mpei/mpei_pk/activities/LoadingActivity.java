@@ -43,7 +43,7 @@ public class LoadingActivity extends AppCompatActivity {
                         intent = new Intent(context, LoginActivity.class);
                     }
                     startActivity(intent);
-
+                    //Закрываем окно загрузки
                     ((Activity)context).finish();
                 }
             }).start();
@@ -52,6 +52,7 @@ public class LoadingActivity extends AppCompatActivity {
             //В противном случае - вызов окна авторизации.
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
+            //Закрываем окно загрузки
             this.finish();
         }
     }

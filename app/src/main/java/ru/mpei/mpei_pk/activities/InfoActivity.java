@@ -15,16 +15,13 @@ public class InfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
 
-        TextView tvView = (TextView)findViewById(R.id.userInfoTextView);
+        TextView tvView = findViewById(R.id.userInfoTextView);
 
         Intent intent = getIntent();
 
-        String userNic = intent.getStringExtra("userNic");
-        String userPwd = intent.getStringExtra("userPwd");
+        String message = intent.getStringExtra("message");
 
-        String data = "Вы успешно зарегистрированы!\nПожалуйста, запомните Ваши данные для входа" +
-                "в свой аккаунт:\nЛогин - " + userNic + "\nПароль - " + userPwd;
-        tvView.setText(data);
+        tvView.setText(message);
 
     }
 

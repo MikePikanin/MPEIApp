@@ -27,6 +27,8 @@ public class ProtocolMPEI {
     private static final int QUICK_AUTH = 1;
     private static final int USUAL_AUTH = 2;
     private static final int TICKET_AUTH = 3;
+    private static final int EXIT_AUTH = 5;
+    private static final int USUAL_REG = 1;
     private final static String authURL = "https://www.pkmpei.ru/mobile/auth.php";
     private final static String regURL = "https://www.pkmpei.ru/mobile/reg.php";
 
@@ -48,10 +50,12 @@ public class ProtocolMPEI {
             String sign_data = Integer.toString(QUICK_AUTH) + nickname + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
 
             jsonObj.put("method", QUICK_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
 
             String data = jsonObj.toString();
 
@@ -100,10 +104,12 @@ public class ProtocolMPEI {
             String sign_data = Integer.toString(TICKET_AUTH) + nickname + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
 
             jsonObj.put("method", TICKET_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
 
             String data = jsonObj.toString();
 
@@ -216,13 +222,16 @@ public class ProtocolMPEI {
         RsaEncryption rsaEnc = new RsaEncryption();
         JSONObject jsonObj = new JSONObject();
         try {
-            String sign_data = Integer.toString(5) + nickname + FirebaseInstanceId.getInstance().getToken();
+            String padding = Base64.encodeToString(new SecureRandom().generateSeed(128), Base64.DEFAULT);
+            String sign_data = Integer.toString(EXIT_AUTH) + nickname + padding + FirebaseInstanceId.getInstance().getToken();
             String sign = rsaEnc.sign(sign_data, Base64.decode(privateKeyStr, Base64.DEFAULT));
             sign = Base64.encodeToString(sign.getBytes("ISO-8859-1"), Base64.DEFAULT);
 
-            jsonObj.put("method", 5);
+            jsonObj.put("method", EXIT_AUTH);
             jsonObj.put("nic", nickname);
             jsonObj.put("sign", sign);
+            jsonObj.put("padding", padding);
+            jsonObj.put("token", FirebaseInstanceId.getInstance().getToken());
 
             String data = jsonObj.toString();
 
@@ -273,7 +282,7 @@ public class ProtocolMPEI {
             publicKey = RsaEncryption.makePemCertificate(publicKeyStr, RsaEncryption.PUBLIC_KEY);
             publicKey = Base64.encodeToString(publicKey.getBytes("ISO-8859-1"), Base64.DEFAULT);
 
-            jsonObj.put("method", 1);
+            jsonObj.put("method", USUAL_REG);
             jsonObj.put("mobilePubKey", publicKey);
             jsonObj.put("token", FirebaseInstanceId.getInstance().getToken());
             for (Map.Entry<String, String> entry : userInfo.entrySet()) {
@@ -359,13 +368,20 @@ public class ProtocolMPEI {
             Request request = new Request.Builder()
                     .url("https://www.pkmpei.ru/mobile/get_queue_load.php")
                     .build();
-            Response response = client.newCall(request).execute();
-
-            if (response.isSuccessful()) {
-                return response.body().string();
-            }
-            else {
-                return null;
+            SharedPreferences sharedPref = context.getSharedPreferences("savedState", Context.MODE_PRIVATE);
+            try {
+                Response response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("queueLoad", response.body().string());
+                    editor.apply();
+                    return response.body().string();
+                }
+                else {
+                    return sharedPref.getString("queueLoad", null);
+                }
+            } catch (Exception e) {
+                return sharedPref.getString("queueLoad", null);
             }
         } catch (Exception e) {
             Log.e("ProtocolMPEI", e.getMessage());
@@ -409,14 +425,22 @@ public class ProtocolMPEI {
             Request request = new Request.Builder()
                     .url("https://www.pkmpei.ru/mobile/get_queue_numbers.php")
                     .build();
-            Response response = client.newCall(request).execute();
+            SharedPreferences sharedPref = context.getSharedPreferences("savedState", Context.MODE_PRIVATE);
+            try {
+                Response response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("queueNumbers", response.body().string());
+                    editor.apply();
+                    return response.body().string();
+                }
+                else {
+                    return sharedPref.getString("queueNumbers", null);
+                }
+            } catch (Exception e) {
+                return sharedPref.getString("queueNumbers", null);
+            }
 
-            if (response.isSuccessful()) {
-                return response.body().string();
-            }
-            else {
-                return null;
-            }
         } catch (Exception e) {
             Log.e("ProtocolMPEI", e.getMessage());
             return null;
@@ -551,14 +575,35 @@ public class ProtocolMPEI {
                                     map.put("EducationLevel", eduLevel);
                                     map.put("OnlyPayForm", onlyPayForm);
                                     map.put("IdReserve", idReserve);
+
+                                    int id_reserve;
+                                    try {
+                                        id_reserve = Integer.parseInt(idReserve);
+                                    } catch (Exception e) {
+                                        id_reserve = 0;
+                                    }
+                                    if (id_reserve > 0) {
+                                        String txtStatus = personInfo.getString("ReserveStatus");
+                                        map.put("ReserveStatus", txtStatus);
+                                        if (txtStatus.equals("OK")) {
+                                            String txtInterval = personInfo.getString("ReserveInterval");
+                                            String txtEduLevel = personInfo.getString("ReserveEducationLevel");
+                                            String txtVisitType = personInfo.getString("ReserveVisitType");
+                                            map.put("ReserveInterval", txtInterval);
+                                            map.put("ReserveEducationLevel", txtEduLevel);
+                                            map.put("ReserveVisitType", txtVisitType);
+                                        }
+                                    }
+
                                 } else {
-                                    map.put("error", "Для иностранцев поставновка в очередь не производится");
+                                    map.put("error", "Уважаемый абитуриент!\n\nДля подачи документов в Приемную комиссию НИУ «МЭИ» необходимо Ваше личное присутствие.");
                                 }
                             } else {
-                                map.put("error", "Резервирование возможно для подачи документов в Москве");
+                                map.put("error", "Уважаемый абитуриент!\n\nРезервирование места в очереди доступно только для подающих документы в НИУ «МЭИ» г.Москва");
                             }
                         } else  {
-                            map.put("error", "Не введены данные");
+                            map.put("error", "Ошибка! \nВы ввели не все персональные данные. Сейчас Вы не можете зарезервировать место в очереди на подачу документов в Приемную комиссию." +
+                                    "\n\nПерейдите на страницу \"Подача документов\" и введите недостающие данные.");
                         }
                         return map;
                     }

@@ -1,15 +1,12 @@
 package ru.mpei.mpei_pk.activities;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import ru.mpei.mpei_pk.ProtocolMPEI;
 import ru.mpei.mpei_pk.R;
 
 
@@ -28,6 +25,7 @@ public class WebActivity extends AppCompatActivity {
         webView.setWebViewClient(new MyWebViewClient());
         webView.getSettings().setBuiltInZoomControls(true);
         webView.getSettings().setDisplayZoomControls(false);
+        webView.getSettings().setUseWideViewPort(true);
         webView.loadUrl(url);
     }
 
@@ -39,6 +37,12 @@ public class WebActivity extends AppCompatActivity {
             view.loadUrl(url);
             return true;
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        webView.destroy();
+        super.onDestroy();
     }
 
     @Override

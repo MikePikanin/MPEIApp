@@ -96,7 +96,7 @@ public class FragmentNews extends Fragment {
                 NewsExpListAdapter newsAdapter = new NewsExpListAdapter(context, titles, news);
                 ExpandableListView expView = ((Activity)context).findViewById(R.id.expViewNews);
                 expView.setAdapter(newsAdapter);
-                if (num > 0) {
+                if (num >= 0) {
                     expView.expandGroup(num);
                 }
             } else {
@@ -127,6 +127,5 @@ public class FragmentNews extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        //mListener = null;
     }
 }
