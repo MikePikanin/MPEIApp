@@ -45,6 +45,7 @@
     <string name="openWebBtn">Перейти на сайт</string>
     <string name="debugLogin">PetrovAR1996</string>
     <string name="debugPass">2YAjer.B</string>
+    <string name="button_navQueue">Занять место в очереди</string>
     <string-array name="passRestoreQuestions">
         <item>Девичья фамилия Вашей матери?</item>
         <item>Кличка Вашего первого питомца?</item>

@@ -44,7 +44,16 @@
                 android:layout_marginTop="5dp"
                 android:background="@drawable/border"
                 />
-            <!--button-->
+            <Button xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/button_navQueue"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/button_navQueue"
+                android:textColor="#ffffff"
+                android:background="@drawable/button_border"
+                android:layout_marginTop="5dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:theme="@style/PrimaryFlatButton"/>
             <com.andexert.expandablelayout.library.ExpandableLayout
                 xmlns:expandable="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/expandableNews"

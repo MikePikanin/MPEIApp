@@ -10,6 +10,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,6 +27,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -54,6 +58,42 @@ import ru.mpei.mpei_pk.activities.MainActivity;
 import ru.mpei.mpei_pk.adapters.ListNewsAdapter;
 import ru.mpei.mpei_pk.dataTypes.ItemNews;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+
+import android.os.Bundle;
+
+import android.support.annotation.NonNull;
+
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatDelegate;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.MenuItem;
+import android.widget.FrameLayout;
+
+import com.google.firebase.iid.FirebaseInstanceId;
+
+import java.util.Timer;
+
+import ru.mpei.mpei_pk.Fragments.FragmentEdit;
+import ru.mpei.mpei_pk.Fragments.FragmentMain;
+import ru.mpei.mpei_pk.Fragments.FragmentNews;
+import ru.mpei.mpei_pk.Fragments.FragmentQueue;
+import ru.mpei.mpei_pk.ProtocolMPEI;
+import ru.mpei.mpei_pk.R;
+
 public class FragmentMain extends Fragment{
 
     private ProtocolMPEI protocolMPEI;
@@ -62,6 +102,7 @@ public class FragmentMain extends Fragment{
     private ExpandableLayout expQueue;
     private ExpandableLayout expRooms;
     private ExpandableLayout expNews;
+    private Button queueButton;
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressBar progressBar;
@@ -99,9 +140,11 @@ public class FragmentMain extends Fragment{
             expQueue = ((Activity)context).findViewById(R.id.expandableQueue);
             expRooms = ((Activity)context).findViewById(R.id.expandableRooms);
             expNews = ((Activity)context).findViewById(R.id.expandableNews);
+            queueButton = ((Activity)context).findViewById(R.id.button_navQueue);
 
             TextView textView;
             FrameLayout layout;
+
 
             layout = expQueue.getHeaderLayout();
             textView = layout.findViewById(R.id.groupTitle);
@@ -119,6 +162,24 @@ public class FragmentMain extends Fragment{
                     }
                 }
             });
+
+            queueButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Fragment fragment = null;
+                    fragment = FragmentQueue.newInstance();
+                    if (fragment != null) {
+                        FragmentManager fragmentManager = ((MainActivity) context).getSupportFragmentManager();
+                        Fragment f = fragmentManager.findFragmentByTag(fragment.getClass().getSimpleName());
+                        FragmentTransaction transaction = fragmentManager.beginTransaction().replace(R.id.flContent, fragment, fragment.getClass().getSimpleName());
+                        //Проверяем, если такой фрагмент уже был открыт и не отображается в данный момент
+                        if (f == null) {
+                            transaction.addToBackStack(null);
+                        }
+                        transaction.commit();
+                    }
+                }
+            });
+
 
             layout = expRooms.getHeaderLayout();
             textView = layout.findViewById(R.id.groupTitle);
@@ -372,6 +433,8 @@ public class FragmentMain extends Fragment{
             Log.e("FragmentMain", e.getMessage());
         }
     }
+
+
     private void displayRooms(String rooms)
     {
         try {
@@ -564,4 +627,5 @@ public class FragmentMain extends Fragment{
         horizontalDivider.setBackgroundColor(context.getResources().getColor(R.color.colorBlack));
         return horizontalDivider;
     }
+
 }
